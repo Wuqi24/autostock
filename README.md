@@ -42,15 +42,15 @@
 
 | Minecraft 版本 | 发行文件 |
 |---|---|
-| 1.21 | `autostock-1.21-1.0.jar` |
-| 1.21.1 | `autostock-1.21.1-1.0.jar` |
-| 1.21.2–1.21.4 | `autostock-1.21.2-1.21.4-1.0.jar` |
-| 1.21.5 | `autostock-1.21.5-1.0.jar` |
-| 1.21.6–1.21.8 | `autostock-1.21.6-1.21.8-1.0.jar` |
-| 1.21.9–1.21.10 | `autostock-1.21.9-1.21.10-1.0.jar` |
-| 1.21.11 | `autostock-1.21.11-1.0.jar` |
-| 26.1–26.1.2 | `autostock-26.1-26.1.2-1.0.jar` |
-| 26.2 | `autostock-26.2-1.0.jar` |
+| 1.21 | [autostock-1.21-1.0.jar](https://github.com/Wuqi24/autostock-1.0/releases/download/v1.0/autostock-1.21-1.0.jar) |
+| 1.21.1 | [autostock-1.21.1-1.0.jar](https://github.com/Wuqi24/autostock-1.0/releases/download/v1.0/autostock-1.21.1-1.0.jar) |
+| 1.21.2–1.21.4 | [autostock-1.21.2-1.21.4-1.0.jar](https://github.com/Wuqi24/autostock-1.0/releases/download/v1.0/autostock-1.21.2-1.21.4-1.0.jar) |
+| 1.21.5 | [autostock-1.21.5-1.0.jar](https://github.com/Wuqi24/autostock-1.0/releases/download/v1.0/autostock-1.21.5-1.0.jar) |
+| 1.21.6–1.21.8 | [autostock-1.21.6-1.21.8-1.0.jar](https://github.com/Wuqi24/autostock-1.0/releases/download/v1.0/autostock-1.21.6-1.21.8-1.0.jar) |
+| 1.21.9–1.21.10 | [autostock-1.21.9-1.21.10-1.0.jar](https://github.com/Wuqi24/autostock-1.0/releases/download/v1.0/autostock-1.21.9-1.21.10-1.0.jar) |
+| 1.21.11 | [autostock-1.21.11-1.0.jar](https://github.com/Wuqi24/autostock-1.0/releases/download/v1.0/autostock-1.21.11-1.0.jar) |
+| 26.1–26.1.2 | [autostock-26.1-26.1.2-1.0.jar](https://github.com/Wuqi24/autostock-1.0/releases/download/v1.0/autostock-26.1-26.1.2-1.0.jar) |
+| 26.2 | [autostock-26.2-1.0.jar](https://github.com/Wuqi24/autostock-1.0/releases/download/v1.0/autostock-26.2-1.0.jar) |
 
 只能使用与 Minecraft 版本对应的发行文件，不要跨区间安装，也不要把 `sources.jar` 当作模组安装。
 
