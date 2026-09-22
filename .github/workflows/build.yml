@@ -54,7 +54,7 @@ jobs:
 
       - name: Build and verify range JAR
         run: >-
-          ./gradlew --no-daemon --stacktrace
+          bash ./gradlew --no-daemon --stacktrace
           -Porg.gradle.java.installations.paths="$JAVA_HOME_21_X64,$JAVA_HOME_25_X64"
           :${{ matrix.minecraft }}:buildAndCollect
 
