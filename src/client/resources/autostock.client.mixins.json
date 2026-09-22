@@ -1,0 +1,9 @@
+{
+  "required": true,
+  "package": "dev.autostock.client.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": ["GuiListBaseAccessor", "GuiWidgetsAccessor", "MaterialListButtonMixin", "KeyboardMixin", "MouseMixin", "DebugRendererMixin"],
+  "injectors": {"defaultRequire": 1}
+}
+
+

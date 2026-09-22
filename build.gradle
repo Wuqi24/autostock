@@ -1,0 +1,171 @@
+import groovy.json.JsonSlurper
+import java.util.zip.ZipFile
+
+plugins {
+    id 'dev.kikugie.loom-back-compat'
+}
+
+def minecraftVersion = sc.current.version
+def requiredJava = sc.current.parsed >= '26.1' ? 25 : 21
+def modVersion = project.property('mod.version')
+def releaseLabel = project.property('release.label')
+def supportedMinecraftVersions = project.property('release.minecraft')
+def quickShulkerVersion = minecraftVersion == '1.21' ? null : project.property('deps.quickshulker')
+def localQuickShulkerRoot = rootProject.file('_temp/upstream')
+def localQuickShulkerAsset = quickShulkerVersion == null ? null
+        : new File(localQuickShulkerRoot, "${quickShulkerVersion}/quickshulker-${quickShulkerVersion}.jar")
+
+version = modVersion
+base { archivesName = "${project.property('mod.id')}-${releaseLabel}" }
+layout.buildDirectory = rootProject.layout.projectDirectory.dir("_work/${minecraftVersion}/build")
+
+repositories {
+    exclusiveContent {
+        forRepository { maven { url = 'https://maven.fallenbreath.me/releases' } }
+        filter { includeGroup 'me.fallenbreath' }
+    }
+    exclusiveContent {
+        forRepository {
+            ivy {
+                // A manually verified local asset is an optional cache for unreliable GitHub connections.
+                // CI and clean checkouts continue to resolve from the upstream release URL.
+                url = localQuickShulkerAsset?.isFile()
+                        ? localQuickShulkerRoot.toURI()
+                        : uri('https://github.com/MoRanpcy/quickshulker/releases/download')
+                patternLayout { artifact '[revision]/[artifact]-[revision](-[classifier]).[ext]' }
+                metadataSources { artifact() }
+            }
+        }
+        filter { includeGroup 'dev.autostock.upstream' }
+    }
+    exclusiveContent {
+        forRepository { maven { url = 'https://api.modrinth.com/maven' } }
+        filter { includeGroup 'maven.modrinth' }
+    }
+    mavenCentral()
+}
+
+loom {
+    splitEnvironmentSourceSets()
+    mods {
+        autostock {
+            sourceSet sourceSets.main
+            sourceSet sourceSets.client
+        }
+    }
+}
+
+// Minecraft 26.1+ ships unobfuscated and uses Mojang's source names. Keep that
+// namespace isolated so the Yarn-based 1.21 source line remains maintainable.
+if (sc.current.parsed >= '26.1') {
+    sourceSets.main.java.setSrcDirs([rootProject.file('src/modernMain/java')])
+    sourceSets.client.java.setSrcDirs([rootProject.file('src/modernClient/java')])
+    // The shared tests are still Yarn/1.21 fixtures; keep them out of the
+    // unobfuscated 26.x verification classpath until they are ported.
+    sourceSets.test.java.setSrcDirs([])
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraftVersion}"
+    if (sc.current.parsed < '26.1') {
+        mappings "net.fabricmc:yarn:${project.property('deps.yarn')}:v2"
+    }
+    modImplementation "net.fabricmc:fabric-loader:${project.property('deps.fabric_loader')}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.property('deps.fabric_api')}"
+    modClientImplementation "maven.modrinth:litematica:${project.property('deps.litematica')}"
+    modClientImplementation "maven.modrinth:malilib:${project.property('deps.malilib')}"
+    modImplementation "maven.modrinth:carpet:${project.property('deps.carpet')}"
+    if (minecraftVersion != '1.21') {
+        modImplementation "dev.autostock.upstream:quickshulker:${quickShulkerVersion}"
+    }
+    // QuickShulker bundles this in production; Loom's development classpath needs it explicitly.
+    modRuntimeOnly 'me.fallenbreath:conditional-mixin-fabric:0.6.4'
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation "net.fabricmc:fabric-loader-junit:${project.property('deps.fabric_loader')}"
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+processResources {
+    inputs.property 'version', project.version
+    inputs.property 'minecraft_versions', supportedMinecraftVersions
+    inputs.property 'java_version', requiredJava
+    filesMatching('fabric.mod.json') {
+        expand version: project.version,
+                minecraft_versions: supportedMinecraftVersions,
+                java_version: requiredJava
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = requiredJava
+    options.encoding = 'UTF-8'
+}
+java {
+    withSourcesJar()
+    toolchain.languageVersion = JavaLanguageVersion.of(requiredJava)
+}
+tasks.withType(Jar).configureEach {
+    from(rootProject.file('LICENSE')) {
+        rename { "LICENSE-${project.property('mod.id')}" }
+    }
+}
+// Opt-in integration tests; ordinary build never accepts an EULA or starts a server.
+if (providers.gradleProperty('gameTests').isPresent()) {
+    fabricApi {
+        configureTests {
+            createSourceSet = true
+            modId = 'autostock-test'
+            enableGameTests = true
+            enableClientGameTests = providers.gradleProperty('clientGameTests').isPresent()
+            clearRunDirectory = false
+            eula = providers.gradleProperty('acceptMinecraftEula').map { it == 'true' }.getOrElse(false)
+        }
+    }
+    if (providers.gradleProperty('clientGameTests').isPresent()) {
+        sourceSets.gametest.java.srcDir('src/clientGametest/java')
+        // Carpet fake connections consume packets without a client receiver. Fabric's test
+        // synchronizer explicitly requires this opt-out for such low-level packet handling.
+        tasks.named('runClientGameTest', JavaExec) {
+            systemProperty 'fabric.client.gametest.disableNetworkSynchronizer', 'true'
+        }
+    }
+}
+test {
+    useJUnitPlatform()
+    workingDir = rootProject.file("_work/${minecraftVersion}/test-runtime")
+    doFirst { workingDir.mkdirs() }
+}
+
+def verifyReleaseJar = tasks.register('verifyReleaseJar') {
+    group = 'verification'
+    description = "Verifies release metadata and licensing for ${releaseLabel}."
+    dependsOn loomx.modJar
+    inputs.file(loomx.modJar.flatMap { it.archiveFile })
+    doLast {
+        def jarFile = loomx.modJar.get().archiveFile.get().asFile
+        assert jarFile.name == "${project.property('mod.id')}-${releaseLabel}-${modVersion}.jar"
+        new ZipFile(jarFile).withCloseable { zip ->
+            assert zip.getEntry("LICENSE-${project.property('mod.id')}") != null
+            def metadata = new JsonSlurper().parse(zip.getInputStream(zip.getEntry('fabric.mod.json')))
+            assert metadata.name == project.property('mod.name')
+            assert metadata.version == modVersion
+            assert metadata.license == 'MIT'
+            assert metadata.depends.minecraft == supportedMinecraftVersions
+            assert metadata.depends.fabricloader == '*'
+            assert metadata.depends['fabric-api'] == '*'
+            ['litematica', 'malilib', 'carpet', 'quickshulker'].each {
+                assert metadata.suggests[it] == '*'
+            }
+        }
+    }
+}
+tasks.named('check') { dependsOn verifyReleaseJar }
+
+tasks.register('buildAndCollect', Copy) {
+    group = 'build'
+    description = "Builds AutoStock for Minecraft ${minecraftVersion} and collects the runtime JAR."
+    dependsOn tasks.named('build')
+    from(loomx.modJar.flatMap { it.archiveFile })
+    into(rootProject.layout.projectDirectory.dir('build/releases'))
+}

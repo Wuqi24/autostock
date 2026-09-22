@@ -1,0 +1,3 @@
+package dev.autostock.net;
+import net.minecraft.network.RegistryByteBuf;import net.minecraft.network.codec.PacketCodec;import net.minecraft.network.packet.CustomPayload;import net.minecraft.util.Identifier;
+public record RegionBound(String json) implements CustomPayload {public static final Id<RegionBound> ID=new Id<>(Identifier.of("autostock","region_bound_v1"));public static final PacketCodec<RegistryByteBuf,RegionBound> CODEC=new PacketCodec<>(){public RegionBound decode(RegistryByteBuf b){return new RegionBound(b.readString(32768));}public void encode(RegistryByteBuf b,RegionBound v){b.writeString(v.json,32768);}};public Id<? extends CustomPayload> getId(){return ID;}}

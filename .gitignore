@@ -1,0 +1,17 @@
+.gradle/
+build/
+_temp/
+_work/
+run/
+out/
+*.log
+*.jar
+*.zip
+!gradle/wrapper/gradle-wrapper.jar
+03_项目踩坑日志.md
+RELEASE_NOTES.md
+docs/
+versions/
+.idea/
+*.iml
+.vscode/

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "autostock",
+  "version": "${version}",
+  "name": "自动备货 · 假人执行",
+  "description": "Litematica 冻结需求、原生区域设置、Carpet 假人取料装盒交付及世界状态恢复。",
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["dev.autostock.AutoStock"],
+    "client": ["dev.autostock.client.AutoStockClient"]
+  },
+  "mixins": [{"config": "autostock.client.mixins.json", "environment": "client"}],
+  "depends": {
+    "fabricloader": "*",
+    "minecraft": "${minecraft_versions}",
+    "java": ">=${java_version}",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "litematica": "*",
+    "malilib": "*",
+    "carpet": "*",
+    "quickshulker": "*"
+  }
+}

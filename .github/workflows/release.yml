@@ -1,0 +1,52 @@
+name: Publish v1.0
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type PUBLISH_v1.0 after manually checking every candidate JAR
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require explicit confirmation
+        if: ${{ inputs.confirmation != 'PUBLISH_v1.0' }}
+        run: exit 1
+
+  build:
+    needs: guard
+    uses: ./.github/workflows/build.yml
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: autostock-*-candidate
+          path: release
+          merge-multiple: true
+
+      - name: Reject duplicate or unexpected files
+        shell: pwsh
+        run: |
+          $files = @(Get-ChildItem -LiteralPath release -File -Filter '*.jar')
+          if ($files.Count -ne 9) { throw "Expected 9 runtime JARs, found $($files.Count)" }
+          if ($files.Name | Where-Object { $_ -like '*sources*' }) { throw 'sources.jar must not be released' }
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create v1.0 release/*.jar
+          --title "自动备货 · 假人执行"
+          --notes "Fabric 模组 AutoStock 1.0，支持 Minecraft 1.21 至 26.2 的正式版本。"
+          --verify-tag=false

@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "id": "autostock-test",
+  "version": "1.0.0",
+  "name": "AutoStock isolated integration tests",
+  "environment": "*",
+  "entrypoints": {"fabric-gametest": ["dev.autostock.server.QuickShulkerGameTest", "dev.autostock.server.NavigationGameTest", "dev.autostock.server.RecoveryGameTest", "dev.autostock.server.TaskGameTest", "dev.autostock.server.InventoryBehaviorGameTest"], "fabric-client-gametest": ["dev.autostock.client.RegionGuiGameTest"]},
+  "depends": {"autostock": "*", "carpet": "1.4.177", "quickshulker": "3.0.1-1.21.8"}
+}
